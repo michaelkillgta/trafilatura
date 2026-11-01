@@ -338,8 +338,25 @@ def process_node(elem: _Element, options: Extractor) -> _Element | None:
     return elem
 
 
+def _list_start(elem: _Element) -> str | None:
+    "Return the start number of an ordered list if it is a usable one other than 1."
+    if elem.tag != "ol":
+        return None
+    try:
+        start = int(elem.get("start", "").strip())
+    except ValueError:
+        return None
+    # CommonMark takes 0 to 999999999 as list start
+    return str(start) if start != 1 and 0 <= start < 10**9 else None
+
+
 def convert_lists(elem: _Element) -> None:
     "Convert <ul> and <ol> to <list> and underlying <li> elements to <item>."
+    # validate the start number once here, so both extraction paths can rely on it
+    start = _list_start(elem)
+    elem.attrib.pop("start", None)
+    if start:
+        elem.set("start", start)
     elem.set("rend", elem.tag)
     elem.tag = "list"
     i = 1

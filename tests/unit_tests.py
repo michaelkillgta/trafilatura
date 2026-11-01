@@ -4646,6 +4646,20 @@ def test_html_conversion():
     assert "start=" not in tei
 
 
+def test_ordered_list_start_from_fallback(monkeypatch):
+    "The start number is validated for lists coming from the fallback extractors too."
+    # an empty main extraction lets the fallback output win
+    monkeypatch.setattr(core, "extract_content", lambda tree, options: (etree.Element("body"), ""))
+    items = "".join(f"<li>Item number {i} with enough words to count as real text.</li>" for i in range(4))
+    for start, marker in (("3", "3. "), ("\u00b2", "1. "), ("x", "1. "), ("-2", "1. ")):
+        doc = f'<html><body><article><ol start="{start}">{items}</ol></article></body></html>'
+        markdown = extract(doc, output_format="markdown", config=ZERO_CONFIG)
+        assert markdown.startswith(marker)
+        html = extract(doc, output_format="html", config=ZERO_CONFIG)
+        assert ('<ol start="3">' in html) == (start == "3")
+        assert f'start="{start}"' not in html or start == "3"
+
+
 def test_deprecations():
     "Test deprecated function parameters."
     htmlstring = "<html><body><article>ABC</article></body></html>"

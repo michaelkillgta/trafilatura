@@ -529,8 +529,8 @@ def _list_marker(item: _Element, include_formatting: bool = True, list_positions
     if include_formatting and parent is not None and parent.get("rend") == "ol":
         # Cache direct item numbers once per list, including those needed for nested markers.
         if item not in list_positions:
-            start = parent.get("start", "")
-            position = int(start) if start.isdigit() else 1
+            # the start number is validated in convert_lists
+            position = int(parent.get("start", "1"))
             for child in parent.iterchildren():
                 list_positions[child] = position
                 if child.tag == "item":
